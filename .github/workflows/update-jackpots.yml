@@ -39,5 +39,3 @@ jobs:
             git commit -m "Mise à jour automatique des jackpots"
             git push
           fi
-
-# Test de mise à jour toutes les 5 minutes v6
