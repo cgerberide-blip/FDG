@@ -1,9 +1,9 @@
 name: Update jackpots
 
-schedule:
+on:
+  schedule:
     - cron: '*/5 * * * *'
-  
-    workflow_dispatch:
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -40,4 +40,4 @@ jobs:
             git push
           fi
 
-# Test de mise à jour toutes les 5 minutes v3
+# Test de mise à jour toutes les 5 minutes v4
