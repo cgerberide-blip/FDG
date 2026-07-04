@@ -40,4 +40,4 @@ jobs:
             git push
           fi
 
-# Test de mise à jour toutes les 5 minutes v5
+# Test de mise à jour toutes les 5 minutes v6
