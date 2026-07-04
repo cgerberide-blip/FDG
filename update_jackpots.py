@@ -1,16 +1,13 @@
-import os
 import json
 import requests
 from datetime import datetime, timezone
 
-API_KEY = os.environ["MAGAYO_API_KEY"]
-
-GAMES = {
-    "loto": "fr_loto",
-    "euromillions": "euromillions"
-}
-
 OUTPUT_FILE = "jackpots.json"
+
+FDJ_ENDPOINTS = {
+    "loto": "https://www.sto.api.fdj.fr/anonymous/service-draw-info/v3/draws?game_name=loto&current=true",
+    "euromillions": "https://www.sto.api.fdj.fr/anonymous/service-draw-info/v3/draws?game_name=euromillions&current=true",
+}
 
 
 def load_existing_data():
@@ -31,45 +28,110 @@ def load_existing_data():
         }
 
 
-def get_jackpot(game_code):
-    url = "https://www.magayo.com/api/jackpot.php"
-    params = {
-        "api_key": API_KEY,
-        "game": game_code
-    }
+def fetch_fdj_draw(game_key):
+    url = FDJ_ENDPOINTS[game_key]
 
-    response = requests.get(url, params=params, timeout=20)
+    response = requests.get(
+        url,
+        timeout=20,
+        headers={
+            "User-Agent": "Mozilla/5.0 jackpot-checker"
+        }
+    )
+
     response.raise_for_status()
 
     data = response.json()
 
-    error_code = int(data.get("error", 999))
+    if not isinstance(data, list) or len(data) == 0:
+        raise Exception(f"Réponse FDJ vide ou inattendue pour {game_key}: {data}")
 
-    if error_code != 0:
-        raise Exception(f"Erreur Magayo pour {game_code}: {data}")
+    draw = data[0]
 
-    return data
+    print(f"Réponse FDJ pour {game_key}:")
+    print(json.dumps(draw, ensure_ascii=False, indent=2))
 
-
-def euros_to_millions(value):
-    amount = float(str(value).replace(",", "").replace(" ", ""))
-    return round(amount / 1_000_000, 2)
+    return draw
 
 
-def update_game(existing_data, key, game_code):
+def amount_to_millions(amount_entry):
+    """
+    FDJ fournit par exemple :
+    {
+      "value": 200000000,
+      "currency": "EUR",
+      "scale": 2
+    }
+
+    Cela signifie 200000000 / 10^2 = 2 000 000 EUR,
+    soit 2 millions d'euros.
+    """
+    value = float(amount_entry["value"])
+    scale = int(amount_entry.get("scale", 0))
+
+    euros = value / (10 ** scale)
+    millions = euros / 1_000_000
+
+    return round(millions, 2)
+
+
+def extract_eur_amount(draw, possible_fields):
+    for field in possible_fields:
+        amounts = draw.get(field)
+
+        if not amounts:
+            continue
+
+        for amount in amounts:
+            if amount.get("currency") == "EUR":
+                return amount_to_millions(amount)
+
+    raise Exception(f"Aucun montant EUR trouvé dans les champs {possible_fields}")
+
+
+def extract_date(draw):
+    planned_at = draw.get("planned_at")
+
+    if not planned_at:
+        raise Exception(f"Champ planned_at absent : {draw}")
+
+    parsed = datetime.fromisoformat(planned_at)
+    return parsed.date().isoformat()
+
+
+def update_game(existing_data, game_key):
     try:
-        data = get_jackpot(game_code)
+        draw = fetch_fdj_draw(game_key)
 
-        existing_data[key] = {
-            "date": data["next_draw"],
-            "jackpotMillions": euros_to_millions(data["jackpot"])
+        if game_key == "loto":
+            jackpot_millions = extract_eur_amount(
+                draw,
+                possible_fields=["estimated_jackpot", "guaranteed_amounts"]
+            )
+        elif game_key == "euromillions":
+            jackpot_millions = extract_eur_amount(
+                draw,
+                possible_fields=["estimated_jackpot", "guaranteed_amounts"]
+            )
+        else:
+            raise Exception(f"Jeu inconnu : {game_key}")
+
+        new_value = {
+            "date": extract_date(draw),
+            "jackpotMillions": jackpot_millions
         }
 
-        print(f"{key}: mise à jour OK -> {existing_data[key]}")
+        old_value = existing_data.get(game_key)
+
+        existing_data[game_key] = new_value
+
+        print(f"{game_key}: ancienne valeur -> {old_value}")
+        print(f"{game_key}: nouvelle valeur -> {new_value}")
+
         return True
 
     except Exception as e:
-        print(f"{key}: mise à jour impossible, conservation de l'ancienne valeur.")
+        print(f"{game_key}: mise à jour impossible, conservation de l'ancienne valeur.")
         print(f"Détail: {e}")
         return False
 
@@ -77,19 +139,20 @@ def update_game(existing_data, key, game_code):
 def main():
     data = load_existing_data()
 
-    loto_updated = update_game(data, "loto", GAMES["loto"])
-    euro_updated = update_game(data, "euromillions", GAMES["euromillions"])
+    loto_updated = update_game(data, "loto")
+    euromillions_updated = update_game(data, "euromillions")
 
-    if loto_updated or euro_updated:
+    if loto_updated or euromillions_updated:
         data["updatedAt"] = datetime.now(timezone.utc).isoformat()
-        print("Au moins un jeu a été mis à jour.")
+        data["source"] = "fdj"
     else:
         print("Aucun jeu n'a pu être mis à jour. Le fichier existant est conservé.")
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-    print("Fin du script sans erreur bloquante.")
+    print("jackpots.json écrit.")
+    print(json.dumps(data, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
