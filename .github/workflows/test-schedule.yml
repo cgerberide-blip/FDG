@@ -10,5 +10,5 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-     - name: Afficher la date
-      run: date
+      - name: Afficher la date
+        run: date
