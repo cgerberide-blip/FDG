@@ -142,11 +142,14 @@ def main():
     loto_updated = update_game(data, "loto")
     euromillions_updated = update_game(data, "euromillions")
 
-    if loto_updated or euromillions_updated:
+    retrieval_successful = loto_updated or euromillions_updated
+
+    if retrieval_successful:
         data["updatedAt"] = datetime.now(timezone.utc).isoformat()
         data["source"] = "fdj"
+        print(f"Récupération réussie. updatedAt mis à jour : {data['updatedAt']}")
     else:
-        print("Aucun jeu n'a pu être mis à jour. Le fichier existant est conservé.")
+        print("Aucune récupération réussie. Conservation complète de l'ancien fichier, updatedAt inchangé.")
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
