@@ -2,7 +2,7 @@ name: Update jackpots
 
 schedule:
     - cron: '*/5 * * * *'
-    workflow_dispatch:
+   workflow_dispatch:
 
 permissions:
   contents: write
