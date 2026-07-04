@@ -1,12 +1,12 @@
 {
   "loto": {
-    "date": "2026-07-04",
-    "jackpotMillions": 2.0
+    "date": "2026-07-06",
+    "jackpotMillions": 3.0
   },
   "euromillions": {
     "date": "2026-07-07",
     "jackpotMillions": 17.0
   },
-  "updatedAt": "2026-07-04T16:40:19.699996+00:00",
+  "updatedAt": "2026-07-04T20:17:35.349414+00:00",
   "source": "fdj"
 }
