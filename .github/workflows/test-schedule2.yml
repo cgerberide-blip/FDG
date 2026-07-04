@@ -1,0 +1,19 @@
+name: Test schedule2
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 * * * *'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Afficher le contexte
+        run: |
+          echo "event_name=${{ github.event_name }}"
+          date -u
