@@ -2,7 +2,7 @@ name: Update jackpots
 
 on:
   schedule:
-    - cron: "17 19,21,23,01,03 * * *"
+    - cron: "13 12,19,21,23,01,03 * * *"
   workflow_dispatch:
 
 permissions:
