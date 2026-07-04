@@ -103,18 +103,10 @@ def update_game(existing_data, game_key):
     try:
         draw = fetch_fdj_draw(game_key)
 
-        if game_key == "loto":
-            jackpot_millions = extract_eur_amount(
-                draw,
-                possible_fields=["estimated_jackpot", "guaranteed_amounts"]
-            )
-        elif game_key == "euromillions":
-            jackpot_millions = extract_eur_amount(
-                draw,
-                possible_fields=["estimated_jackpot", "guaranteed_amounts"]
-            )
-        else:
-            raise Exception(f"Jeu inconnu : {game_key}")
+        jackpot_millions = extract_eur_amount(
+            draw,
+            possible_fields=["estimated_jackpot", "guaranteed_amounts"]
+        )
 
         new_value = {
             "date": extract_date(draw),
