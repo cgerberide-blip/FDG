@@ -4,9 +4,9 @@
     "jackpotMillions": 2.0
   },
   "euromillions": {
-    "date": "2026-09-01",
-    "jackpotMillions": 78.0
+    "date": "2026-09-04",
+    "jackpotMillions": 17.0
   },
-  "updatedAt": "2026-09-01T15:05:51.788099+00:00",
+  "updatedAt": "2026-09-01T18:27:08.462044+00:00",
   "source": "fdj"
 }
